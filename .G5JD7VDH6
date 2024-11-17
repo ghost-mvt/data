@@ -1,0 +1,60 @@
+package com.damylola.sk.alarm;
+
+import android.app.AlarmManager;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.media.MediaPlayer;
+import android.os.Build;
+import android.provider.Settings;
+import android.widget.Toast;
+
+public class MyBroadCastReceiver extends BroadcastReceiver {
+    private MediaPlayer mp;
+
+    @Override
+    public void onReceive(Context context, Intent intent) {
+        // تشغيل صوت التنبيه
+        try {
+            mp = MediaPlayer.create(context, R.raw.alarm);
+            if (mp != null) {
+                mp.setLooping(true);
+                mp.start();
+            }
+        } catch (Exception e) {
+            Toast.makeText(context, "Error playing alarm sound.", Toast.LENGTH_SHORT).show();
+        }
+
+        Toast.makeText(context, "Alarm is ringing!", Toast.LENGTH_LONG).show();
+
+        // التحقق من الإذن لعرض النافذة
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(context)) {
+            Intent permissionIntent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION);
+            permissionIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(permissionIntent);
+        } else {
+            // فتح التطبيق مباشرة بدلاً من عرض Dialog
+            openMainActivity(context);
+        }
+    }
+
+    private void openMainActivity(Context context) {
+        Intent intent = new Intent(context, MainActivity.class);  // ضع هنا اسم النشاط الرئيسي الخاص بتطبيقك
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);  // التأكد من فتح التطبيق إذا كان مغلقًا
+        context.startActivity(intent);
+    }
+
+    private void restartAlarm(Context context, int seconds) {
+        Intent intent = new Intent(context, MyBroadCastReceiver.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                context.getApplicationContext(), 234324243, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        if (alarmManager != null) {
+            long triggerTime = System.currentTimeMillis() + (seconds * 1000);
+            alarmManager.set(AlarmManager.RTC_WAKEUP, triggerTime, pendingIntent);
+        }
+        Toast.makeText(context, "Alarm will restart in " + seconds + " seconds.", Toast.LENGTH_SHORT).show();
+    }
+}
